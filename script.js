@@ -52,14 +52,13 @@
   const hungerBar = $("#hungerBar");
   const happinessBar = $("#happinessBar");
   const energyBar = $("#energyBar");
+  const petStatus = $("#petStatus");
 
   const feedBtn = $("#feedBtn");
   const playBtn = $("#playBtn");
   const sleepBtn = $("#sleepBtn");
 
-  const chatMessages = $("#chatMessages");
-  const chatInput = $("#chatInput");
-  const chatSend = $("#chatSend");
+  // Chat eliminado
 
   // Ball game
   const ballArea = $("#ballGameArea");
@@ -131,7 +130,7 @@
   function feedPet() {
     state.hunger = Math.max(0, state.hunger - 25);
     state.happiness = Math.min(100, state.happiness + 8);
-    addPetMessage("¡Qué rico! Gracias por la comida 🍖");
+    showPetStatus("¡Qué rico! Gracias por la comida 🍖");
     renderAll();
     Storage.save("pawsitive_state", state);
   }
@@ -141,11 +140,11 @@
     const energyCost = 15;
     if (state.energy < energyCost) {
       state.happiness = Math.min(100, state.happiness + 4);
-      addPetMessage("Estoy un poco cansado… juguemos suave 🐾");
+      showPetStatus("Estoy un poco cansado… juguemos suave 🐾");
     } else {
       state.energy = Math.max(0, state.energy - energyCost);
       state.happiness = Math.min(100, state.happiness + 12);
-      addPetMessage("¡Me encanta jugar contigo! 🎉");
+      showPetStatus("¡Me encanta jugar contigo! 🎉");
     }
     renderAll();
     Storage.save("pawsitive_state", state);
@@ -155,62 +154,15 @@
     // Dormir recupera energía y baja un poco el hambre
     state.energy = Math.min(100, state.energy + 30);
     state.hunger = Math.min(100, state.hunger + 5);
-    addPetMessage("Zzz… Gracias por dejarme descansar 😴");
+    showPetStatus("Zzz… Gracias por dejarme descansar 😴");
     renderAll();
     Storage.save("pawsitive_state", state);
   }
 
-  // ---------- Chat sencillo con keywords ----------
-  const KEYWORD_RESPONSES = [
-    { keys: ["hola", "buenas", "hey"], response: "¡Hola! Soy tu Pawsitive Pet. 🐾" },
-    { keys: ["hambre", "comer", "alimento"], response: "Si tienes comida, ¡me encantaría! 🍖" },
-    { keys: ["jugar", "play", "divertir"], response: "¡Sí! ¿Probamos un mini‑juego? 🎮" },
-    { keys: ["dormir", "siesta", "descansar"], response: "Un ratito de siesta suena bien… 😴" },
-    { keys: ["feliz", "contento", "triste"], response: "Me haces feliz cuando estás aquí 💛" },
-    { keys: ["amor", "cariño"], response: "Te quiero mucho 💖" },
-    { keys: ["reglas", "ayuda", "help"], response: "Puedo comer, jugar, dormir y guardar mi progreso. ¡Hablemos!" },
-  ];
-
-  function addMessage(text, who = "user") {
-    const wrapper = document.createElement("div");
-    wrapper.className = `message ${who}`;
-
-    if (who === "pet") {
-      const avatar = document.createElement("div");
-      avatar.className = "avatar";
-      avatar.textContent = petEl.textContent || "🐶";
-      wrapper.appendChild(avatar);
-    }
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = text;
-    wrapper.appendChild(bubble);
-
-    chatMessages.appendChild(wrapper);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  function addUserMessage(text) { addMessage(text, "user"); }
-  function addPetMessage(text) { addMessage(text, "pet"); }
-
-  function petReplyTo(input) {
-    const msg = input.trim().toLowerCase();
-    if (!msg) return;
-    const found = KEYWORD_RESPONSES.find(({ keys }) => keys.some((k) => msg.includes(k)));
-    if (found) {
-      addPetMessage(found.response);
-    } else {
-      addPetMessage("No entendí muy bien… pero te escucho con atención 🐶");
-    }
-  }
-
-  function handleSendChat() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-    addUserMessage(text);
-    chatInput.value = "";
-    setTimeout(() => petReplyTo(text), 250);
+  // ---------- Mensajes breves de estado de la mascota ----------
+  function showPetStatus(text) {
+    if (!petStatus) return;
+    petStatus.textContent = text;
   }
 
   // ---------- Mini‑juego: Atrapar la pelota ----------
@@ -240,7 +192,7 @@
     ballRunning = true;
     ballScore = 0;
     ballScoreEl.textContent = String(ballScore);
-    addPetMessage("¡Atrapa la pelota! 🏀");
+    showPetStatus("¡Atrapa la pelota! 🏀");
     moveBall();
     const startAt = Date.now();
     let lastMove = 0;
@@ -265,7 +217,7 @@
     if (!ballRunning) return;
     ballRunning = false;
     if (ballTimer) cancelAnimationFrame(ballTimer);
-    addPetMessage(`Tiempo. ¡Puntaje: ${ballScore}!`);
+    showPetStatus(`Tiempo. ¡Puntaje: ${ballScore}!`);
     // Recompensas
     state.happiness = Math.min(100, state.happiness + Math.min(15, ballScore));
     state.energy = Math.max(0, state.energy - 10);
@@ -350,7 +302,7 @@
       Storage.save("pawsitive_state", state);
       renderAll();
       if (memoryPairsFound === MEMORY_EMOJIS.length) {
-        addPetMessage("¡Memoria completada! 🎉");
+        showPetStatus("¡Memoria completada! 🎉");
         // recompensa final
         state.happiness = Math.min(100, state.happiness + 10);
         state.energy = Math.max(0, state.energy - 8);
@@ -373,10 +325,7 @@
   playBtn.addEventListener("click", playWithPet);
   sleepBtn.addEventListener("click", sleepPet);
 
-  chatSend.addEventListener("click", handleSendChat);
-  chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") handleSendChat();
-  });
+  // eventos de chat eliminados
 
   ballStart.addEventListener("click", startBallGame);
   ballStop.addEventListener("click", stopBallGame);
@@ -387,11 +336,77 @@
 
   memoryStart.addEventListener("click", renderMemoryBoard);
 
+  // ---------- Mini‑juego: Reflejos ----------
+  const reactionArea = $("#reactionArea");
+  const reactionStart = $("#reactionStart");
+  const reactionStatus = $("#reactionStatus");
+  let reactionTimeoutId = null;
+  let reactionStartAt = 0;
+  let reactionArmed = false;
+
+  function resetReactionGame() {
+    reactionArmed = false;
+    reactionStartAt = 0;
+    if (reactionTimeoutId) {
+      clearTimeout(reactionTimeoutId);
+      reactionTimeoutId = null;
+    }
+    if (reactionArea) {
+      reactionArea.classList.remove("ready");
+      reactionArea.textContent = "Espera…";
+    }
+    if (reactionStatus) reactionStatus.textContent = "Listo";
+  }
+
+  function startReactionGame() {
+    resetReactionGame();
+    if (!reactionArea) return;
+    reactionStatus.textContent = "Preparado…";
+    const delay = 1000 + Math.random() * 3000; // 1-4s
+    reactionTimeoutId = setTimeout(() => {
+      reactionArea.classList.add("ready");
+      reactionArea.textContent = "¡Clic!";
+      reactionArmed = true;
+      reactionStartAt = performance.now();
+    }, delay);
+  }
+
+  function handleReactionClick() {
+    if (!reactionArea) return;
+    if (!reactionArmed) {
+      // clic temprano
+      resetReactionGame();
+      reactionStatus.textContent = "Muy pronto. Intenta de nuevo.";
+      state.happiness = Math.max(0, state.happiness - 1);
+      Storage.save("pawsitive_state", state);
+      renderAll();
+      return;
+    }
+    const elapsedMs = Math.round(performance.now() - reactionStartAt);
+    reactionStatus.textContent = `Tiempo: ${elapsedMs} ms`;
+    showPetStatus(`Reflejos: ${elapsedMs} ms ⚡`);
+    // recompensas simples
+    const happinessBoost = elapsedMs < 250 ? 8 : elapsedMs < 400 ? 5 : 2;
+    state.happiness = Math.min(100, state.happiness + happinessBoost);
+    state.energy = Math.max(0, state.energy - 5);
+    Storage.save("pawsitive_state", state);
+    renderAll();
+    resetReactionGame();
+  }
+
+  if (reactionStart) reactionStart.addEventListener("click", startReactionGame);
+  if (reactionArea) {
+    reactionArea.addEventListener("click", handleReactionClick);
+    reactionArea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") handleReactionClick();
+    });
+  }
+
   // ---------- Init ----------
   function bootstrap() {
     renderAll();
     renderMemoryBoard();
-    addPetMessage("¡Hola! Soy tu Pawsitive Pet. ¿Jugamos? 🐾");
+    showPetStatus("¡Hola! Soy tu Pawsitive Pet. ¿Jugamos? 🐾");
     // Lanzar bucle del juego (animación/ticks)
     requestAnimationFrame(gameLoop);
   }

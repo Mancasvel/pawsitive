@@ -55,7 +55,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr; /* sin chat, una sola columna */
   gap: 20px;
   padding: 16px;
   max-width: 1100px;
@@ -64,12 +64,10 @@ body {
 }
 
 @media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
+  .layout { grid-template-columns: 1fr; }
 }
 
-.panel-left, .panel-right, .game {
+.panel-left, .game {
   background: var(--card);
   border-radius: 14px;
   box-shadow: var(--shadow);
@@ -119,6 +117,12 @@ body {
   gap: 8px;
 }
 
+.pet-status {
+  margin-top: 10px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
 .btn {
   background: var(--primary);
   color: var(--primary-contrast);
@@ -161,47 +165,7 @@ body {
   transition: width 0.3s ease;
 }
 
-.chat {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  height: 100%;
-}
-
-.chat-messages {
-  background: #f7f9fb;
-  border-radius: 8px;
-  padding: 12px;
-  height: 320px;
-  overflow: auto;
-  scroll-behavior: smooth;
-}
-
-.message { margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; }
-.message .bubble {
-  background: #fff;
-  border-radius: 14px;
-  padding: 8px 12px;
-  box-shadow: var(--shadow);
-  max-width: 80%;
-  line-height: 1.35;
-}
-.message.user { justify-content: flex-end; }
-.message.user .bubble { background: #dbeafe; }
-.message.pet .avatar { font-size: 20px; }
-
-.chat-input {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
-
-.chat-input input {
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  outline: none;
-}
+/* estilos de chat eliminados */
 
 .games {
   max-width: 1100px;
@@ -288,13 +252,23 @@ body {
 
 /* Day/Night accents */
 body.night .panel-left,
-body.night .panel-right,
 body.night .game {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-night);
 }
 
-body.night .chat-messages { background: rgba(255,255,255,0.06); }
-body.night .message .bubble { background: rgba(255,255,255,0.12); }
-body.night .message.user .bubble { background: rgba(58,134,255,0.35); }
+/* Reflejos */
+.reaction-area {
+  display: grid;
+  place-items: center;
+  height: 160px;
+  border-radius: 12px;
+  user-select: none;
+  background: #fde2e4; /* rojo claro = espera */
+  color: #3a0ca3;
+  font-weight: 700;
+}
+
+.reaction-area.ready { background: #caffbf; color: #1b4332; }
+.reaction-status { margin: 8px 0; font-size: 14px; opacity: 0.9; }
 

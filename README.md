@@ -5,7 +5,6 @@ Mascota virtual 100% HTML + CSS + JavaScript (sin frameworks, sin librerías ext
 ## Características
 
 - Mascota animada en pantalla (emoji con animación y estados).
-- Chat por palabras clave (hola, hambre, jugar, dormir, ayuda, etc.).
 - Sistema de estados persistente:
   - Hambre: sube con el tiempo, baja al «Alimentar».
   - Felicidad: sube al jugar y completar juegos, baja si se ignora o tiene mucha hambre.
@@ -13,6 +12,7 @@ Mascota virtual 100% HTML + CSS + JavaScript (sin frameworks, sin librerías ext
 - Mini‑juegos integrados:
   - Atrapar la pelota (click rápido en una pelota que se mueve).
   - Juego de memoria (emparejar cartas con emojis).
+  - Reflejos (haz clic cuando el panel se ponga verde lo más rápido posible).
 - Modo día/noche automático según hora local.
 - Persistencia con `localStorage` para mantener el progreso tras recargar.
 
@@ -36,10 +36,10 @@ README.md    # Este archivo
 - Alimentar: botón «🍖 Alimentar» para reducir hambre y subir un poco la felicidad.
 - Jugar: botón «🎮 Jugar» incrementa felicidad y consume energía.
 - Dormir: botón «😴 Dormir» recupera energía (aumenta ligeramente el hambre).
-- Chat: escribe en el campo de texto. El bot responde con frases predefinidas por palabras clave.
 - Mini‑juegos: 
   - Atrapar la pelota: pulsa «Iniciar», haz clic en la pelota hasta que acabe el tiempo.
   - Memoria: pulsa «Nuevo juego», descubre y empareja todas las cartas.
+  - Reflejos: pulsa «Iniciar» y haz clic cuando el panel se ponga verde.
 
 ## Decisiones de diseño (por qué)
 
@@ -47,7 +47,7 @@ README.md    # Este archivo
 - Emoji como sprite: simplifica assets y mejora compatibilidad. Se puede sustituir por sprites CSS si se desea.
 - Estados [0..100]: permite barras intuitivas y fácil normalización.
 - Persistencia mínima: `localStorage` con una única clave (`pawsitive_state`).
-- Código modular por funciones: cada feature (chat, estados, juegos) tiene funciones separadas.
+- Código modular por funciones: cada feature (estados y mini‑juegos) tiene funciones separadas.
 - Accesibilidad básica: roles, `aria-label`, tab-focus en elementos interactivos.
 
 ## Personalización

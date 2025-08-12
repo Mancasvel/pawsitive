@@ -14,7 +14,7 @@
     </header>
 
     <main class="layout" id="app">
-      <!-- Panel izquierdo: Mascota + Controles + Estadísticas -->
+      <!-- Panel: Mascota + Controles + Estadísticas -->
       <section class="panel-left">
         <div class="pet-area">
           <!-- Mascota: simple emoji con animación -->
@@ -27,6 +27,9 @@
             <button id="sleepBtn" class="btn">😴 Dormir</button>
           </div>
         </div>
+
+        <!-- Mensajes breves de la mascota -->
+        <div class="pet-status" id="petStatus" aria-live="polite">Listo</div>
 
         <!-- Estadísticas de la mascota -->
         <div class="stats" aria-live="polite">
@@ -41,17 +44,6 @@
           <div class="stat">
             <label for="energyBar">Energía</label>
             <div class="bar"><div id="energyBar" class="fill"></div></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Panel derecho: Chat -->
-      <section class="panel-right">
-        <div class="chat" aria-live="polite">
-          <div class="chat-messages" id="chatMessages"></div>
-          <div class="chat-input">
-            <input id="chatInput" type="text" placeholder="Escribe para hablar con tu mascota..." aria-label="Mensaje para la mascota" />
-            <button id="chatSend" class="btn">Enviar</button>
           </div>
         </div>
       </section>
@@ -88,6 +80,19 @@
         <p class="game-info">Empareja todas las cartas. ¡Gana felicidad al completar!</p>
         <div class="memory-status" id="memoryStatus">Listo</div>
         <div class="memory-grid" id="memoryGrid" aria-label="Tablero de memoria"></div>
+      </article>
+
+      <!-- Reflejos -->
+      <article class="game" id="reactionGame">
+        <div class="game-header">
+          <h3>⏱ Reflejos</h3>
+          <div class="game-controls">
+            <button id="reactionStart" class="btn">Iniciar</button>
+          </div>
+        </div>
+        <p class="game-info">Haz clic cuando el panel se ponga verde lo más rápido posible.</p>
+        <div class="reaction-status" id="reactionStatus">Listo</div>
+        <div class="reaction-area" id="reactionArea" aria-label="Área de reflejos" tabindex="0">Espera…</div>
       </article>
     </section>
 

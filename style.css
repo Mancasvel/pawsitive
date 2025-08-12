@@ -324,3 +324,5 @@ body.night .game {
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
+.promotion-options { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 8px; }
+

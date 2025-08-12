@@ -86,7 +86,7 @@
   }
 
   function renderPetMood() {
-    // Base emoji from type
+    // Base emoji from selected type only (no mood override)
     const TYPE_TO_EMOJI = {
       dog: "🐶",
       cat: "🐱",
@@ -98,10 +98,6 @@
       unicorn: "🦄",
     };
     let emoji = TYPE_TO_EMOJI[state.petType] || "🐶";
-    // Simple mood overlay
-    if (state.hunger > 70) emoji = "🥺";
-    if (state.happiness > 80) emoji = "😄";
-    if (state.energy < 25) emoji = "🥱";
     petEl.textContent = emoji;
     if (state.petName) {
       petEl.setAttribute("aria-label", `${state.petName} the ${state.petType}`);
@@ -437,6 +433,13 @@
   let chessBoard = [];
   let chessSelected = -1;
   let chessTurn = "w"; // 'w' or 'b'
+  let chessCastle = { wk: true, wq: true, bk: true, bq: true };
+  let chessEnPassant = -1; // index of en passant target square or -1
+  let chessLocked = false; // lock input during promotion
+  let pendingPromotion = null; // { to: index }
+
+  const promotionModal = document.getElementById("promotionModal");
+  const promotionButtons = () => Array.from((promotionModal || document).querySelectorAll("[data-piece]"));
 
   function chessIndexToCoord(i) { return { x: i % 8, y: Math.floor(i / 8) }; }
   function chessCoordToIndex(x, y) { return y * 8 + x; }
@@ -457,6 +460,10 @@
     ];
     chessSelected = -1;
     chessTurn = "w";
+    chessCastle = { wk: true, wq: true, bk: true, bq: true };
+    chessEnPassant = -1;
+    chessLocked = false;
+    pendingPromotion = null;
     renderChessBoard();
     setChessStatus("Your turn (White)");
   }
@@ -495,6 +502,7 @@
 
   function onClickChessSquare(idx) {
     if (chessTurn !== "w") return;
+    if (chessLocked) return;
     const piece = chessBoard[idx];
     if (chessSelected === -1) {
       if (piece && isWhite(piece)) {
@@ -510,11 +518,17 @@
     }
     const legal = generateMovesForIndex(chessSelected, "w");
     if (legal.includes(idx)) {
-      makeChessMove(chessSelected, idx, "w");
+      const result = makeChessMove(chessSelected, idx, "w");
       chessSelected = -1;
       renderChessBoard();
-      setChessStatus("Pet is thinking…");
-      setTimeout(petChessMove, 400);
+      if (result === "awaiting") {
+        // waiting for promotion choice
+        return;
+      }
+      if (chessTurn === "b") {
+        setChessStatus("Pet is thinking…");
+        setTimeout(petChessMove, 400);
+      }
     } else {
       // allow reselection if clicking on another white piece
       if (piece && isWhite(piece)) {
@@ -524,25 +538,82 @@
     }
   }
 
-  function makeChessMove(from, to, side) {
+  function makeChessMove(from, to, side, promotionPiece) {
     const mover = chessBoard[from];
-    // Promotion to queen
-    if (mover === "P" && Math.floor(to / 8) === 0) {
-      chessBoard[to] = "Q";
-    } else if (mover === "p" && Math.floor(to / 8) === 7) {
-      chessBoard[to] = "q";
-    } else {
-      chessBoard[to] = mover;
+    const fromC = chessIndexToCoord(from);
+    const toC = chessIndexToCoord(to);
+    let captured = chessBoard[to];
+
+    // Handle en passant capture
+    if ((mover === "P" || mover === "p") && to === chessEnPassant && !captured) {
+      const capIdx = mover === "P" ? to + 8 : to - 8; // remove the pawn behind
+      captured = chessBoard[capIdx];
+      chessBoard[capIdx] = "";
     }
+
+    // Move piece to destination
+    chessBoard[to] = mover;
     chessBoard[from] = "";
+
+    // Handle castling rook move if king moved two squares
+    if (mover === "K" && from === 60 && (to === 62 || to === 58)) {
+      // White
+      if (to === 62) { chessBoard[61] = "R"; chessBoard[63] = ""; }
+      if (to === 58) { chessBoard[59] = "R"; chessBoard[56] = ""; }
+    } else if (mover === "k" && from === 4 && (to === 6 || to === 2)) {
+      // Black
+      if (to === 6) { chessBoard[5] = "r"; chessBoard[7] = ""; }
+      if (to === 2) { chessBoard[3] = "r"; chessBoard[0] = ""; }
+    }
+
+    // Update castling rights on moves
+    if (mover === "K") { chessCastle.wk = false; chessCastle.wq = false; }
+    if (mover === "k") { chessCastle.bk = false; chessCastle.bq = false; }
+    if (mover === "R" && from === 63) chessCastle.wk = false;
+    if (mover === "R" && from === 56) chessCastle.wq = false;
+    if (mover === "r" && from === 7) chessCastle.bk = false;
+    if (mover === "r" && from === 0) chessCastle.bq = false;
+
+    // Update castling rights on rook capture
+    if (captured === "r" && to === 7) chessCastle.bk = false;
+    if (captured === "r" && to === 0) chessCastle.bq = false;
+    if (captured === "R" && to === 63) chessCastle.wk = false;
+    if (captured === "R" && to === 56) chessCastle.wq = false;
+
+    // Setup/clear en passant target
+    chessEnPassant = -1;
+    if (mover === "P" && fromC.y === 6 && toC.y === 4) chessEnPassant = chessCoordToIndex(fromC.x, 5);
+    if (mover === "p" && fromC.y === 1 && toC.y === 3) chessEnPassant = chessCoordToIndex(fromC.x, 2);
+
+    // Handle promotion
+    if (mover === "P" && toC.y === 0) {
+      // Ask user which piece
+      if (!promotionPiece) {
+        pendingPromotion = { to };
+        chessLocked = true;
+        if (promotionModal) {
+          promotionModal.classList.add("visible");
+          promotionModal.setAttribute("aria-hidden", "false");
+        }
+        // Do not change turn yet
+        return "awaiting";
+      }
+      chessBoard[to] = promotionPiece; // Q/R/B/N upper-case
+    } else if (mover === "p" && toC.y === 7) {
+      chessBoard[to] = "q"; // auto promote for pet
+    }
+
+    // Switch turn
     chessTurn = side === "w" ? "b" : "w";
-    // small mood impact
+
+    // small mood impact for the player
     if (side === "w") {
       state.happiness = Math.min(100, state.happiness + 1);
       state.energy = Math.max(0, state.energy - 1);
     }
     Storage.save("pawsitive_state", state);
     renderAll();
+
     // Check king capture (simplified end)
     if (!chessBoard.includes("k")) {
       setChessStatus(`Checkmate (capture)! ${state.petName || "Your pet"} resigns. You win!`);
@@ -574,7 +645,7 @@
     const captureMoves = allMoves.filter((m) => m.captures);
     const choicePool = captureMoves.length ? captureMoves : allMoves;
     const choice = choicePool[Math.floor(Math.random() * choicePool.length)];
-    makeChessMove(choice.from, choice.to, "b");
+    makeChessMove(choice.from, choice.to, "b", "q");
     if (chessTurn !== "-") setChessStatus("Your turn (White)");
     renderChessBoard();
   }
@@ -605,6 +676,11 @@
         if (y === 6 && !chessBoard[chessCoordToIndex(x, y - 1)] && !chessBoard[chessCoordToIndex(x, y - 2)]) pushIf(x, y - 2);
         if (isOpponent(chessBoard[chessCoordToIndex(x - 1, y - 1)])) pushIf(x - 1, y - 1);
         if (isOpponent(chessBoard[chessCoordToIndex(x + 1, y - 1)])) pushIf(x + 1, y - 1);
+        // en passant capture
+        if (chessEnPassant >= 0) {
+          const ep = chessIndexToCoord(chessEnPassant);
+          if (ep.y === y - 1 && Math.abs(ep.x - x) === 1) moves.push(chessEnPassant);
+        }
         break;
       }
       case "p": {
@@ -612,6 +688,11 @@
         if (y === 1 && !chessBoard[chessCoordToIndex(x, y + 1)] && !chessBoard[chessCoordToIndex(x, y + 2)]) pushIf(x, y + 2);
         if (isOpponent(chessBoard[chessCoordToIndex(x - 1, y + 1)])) pushIf(x - 1, y + 1);
         if (isOpponent(chessBoard[chessCoordToIndex(x + 1, y + 1)])) pushIf(x + 1, y + 1);
+        // en passant capture
+        if (chessEnPassant >= 0) {
+          const ep = chessIndexToCoord(chessEnPassant);
+          if (ep.y === y + 1 && Math.abs(ep.x - x) === 1) moves.push(chessEnPassant);
+        }
         break;
       }
       case "N": case "n": {
@@ -635,6 +716,35 @@
           const t = chessCoordToIndex(tx, ty);
           if (!chessBoard[t] || isOpponent(chessBoard[t])) moves.push(t);
         });
+        // Castling
+        if (piece === "K" && idx === 60) {
+          // kingside: e1 -> g1 (60 -> 62)
+          if (chessCastle.wk && !chessBoard[61] && !chessBoard[62]) {
+            if (!isSquareAttackedBy(60, "b") && !isSquareAttackedBy(61, "b") && !isSquareAttackedBy(62, "b")) {
+              moves.push(62);
+            }
+          }
+          // queenside: e1 -> c1 (60 -> 58)
+          if (chessCastle.wq && !chessBoard[59] && !chessBoard[58] && !chessBoard[57]) {
+            if (!isSquareAttackedBy(60, "b") && !isSquareAttackedBy(59, "b") && !isSquareAttackedBy(58, "b")) {
+              moves.push(58);
+            }
+          }
+        }
+        if (piece === "k" && idx === 4) {
+          // kingside: e8 -> g8 (4 -> 6)
+          if (chessCastle.bk && !chessBoard[5] && !chessBoard[6]) {
+            if (!isSquareAttackedBy(4, "w") && !isSquareAttackedBy(5, "w") && !isSquareAttackedBy(6, "w")) {
+              moves.push(6);
+            }
+          }
+          // queenside: e8 -> c8 (4 -> 2)
+          if (chessCastle.bq && !chessBoard[3] && !chessBoard[2] && !chessBoard[1]) {
+            if (!isSquareAttackedBy(4, "w") && !isSquareAttackedBy(3, "w") && !isSquareAttackedBy(2, "w")) {
+              moves.push(2);
+            }
+          }
+        }
         break;
       }
     }
@@ -642,7 +752,90 @@
     return moves.filter((m) => !isSide(chessBoard[m]));
   }
 
+  function isSquareAttackedBy(idx, attackerSide) {
+    const isAttacker = attackerSide === "w" ? isWhite : isBlack;
+    const { x, y } = chessIndexToCoord(idx);
+    // Pawns
+    if (attackerSide === "w") {
+      const s1 = chessCoordToIndex(x - 1, y + 1);
+      const s2 = chessCoordToIndex(x + 1, y + 1);
+      if (isInside(x - 1, y + 1) && chessBoard[s1] === "P") return true;
+      if (isInside(x + 1, y + 1) && chessBoard[s2] === "P") return true;
+    } else {
+      const s1 = chessCoordToIndex(x - 1, y - 1);
+      const s2 = chessCoordToIndex(x + 1, y - 1);
+      if (isInside(x - 1, y - 1) && chessBoard[s1] === "p") return true;
+      if (isInside(x + 1, y - 1) && chessBoard[s2] === "p") return true;
+    }
+    // Knights
+    const knightD = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
+    for (const [dx, dy] of knightD) {
+      const tx = x + dx, ty = y + dy;
+      if (!isInside(tx, ty)) continue;
+      const p = chessBoard[chessCoordToIndex(tx, ty)];
+      if (attackerSide === "w" && p === "N") return true;
+      if (attackerSide === "b" && p === "n") return true;
+    }
+    // Sliding pieces
+    const rays = [
+      { d: [[1,0],[-1,0],[0,1],[0,-1]], rooks: true },
+      { d: [[1,1],[1,-1],[-1,1],[-1,-1]], bishops: true },
+    ];
+    for (const group of rays) {
+      for (const [dx, dy] of group.d) {
+        let tx = x + dx, ty = y + dy;
+        while (isInside(tx, ty)) {
+          const p = chessBoard[chessCoordToIndex(tx, ty)];
+          if (p) {
+            if (attackerSide === "w") {
+              if (group.rooks && (p === "R" || p === "Q")) return true;
+              if (group.bishops && (p === "B" || p === "Q")) return true;
+            } else {
+              if (group.rooks && (p === "r" || p === "q")) return true;
+              if (group.bishops && (p === "b" || p === "q")) return true;
+            }
+            break;
+          }
+          tx += dx; ty += dy;
+        }
+      }
+    }
+    // King
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+      const tx = x + dx, ty = y + dy;
+      if (!isInside(tx, ty)) continue;
+      const p = chessBoard[chessCoordToIndex(tx, ty)];
+      if (attackerSide === "w" && p === "K") return true;
+      if (attackerSide === "b" && p === "k") return true;
+    }
+    return false;
+  }
+
   if (chessNewGameBtn) chessNewGameBtn.addEventListener("click", newChessGame);
+  // Promotion handlers
+  if (promotionModal) {
+    promotionButtons().forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const piece = String(btn.getAttribute("data-piece") || "Q");
+        if (pendingPromotion) {
+          // Apply choice
+          chessBoard[pendingPromotion.to] = piece;
+          pendingPromotion = null;
+          chessLocked = false;
+          promotionModal.classList.remove("visible");
+          promotionModal.setAttribute("aria-hidden", "true");
+          chessTurn = "b";
+          Storage.save("pawsitive_state", state);
+          renderAll();
+          renderChessBoard();
+          if (chessTurn !== "-") {
+            setChessStatus("Pet is thinking…");
+            setTimeout(petChessMove, 400);
+          }
+        }
+      });
+    });
+  }
 
   // ---------- Onboarding ----------
   function showOnboardingIfNeeded() {

@@ -1,104 +1,144 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pawsitive Pet</title>
     <link rel="stylesheet" href="style.css" />
-    <meta name="description" content="Pawsitive Pet - Mascota virtual 100% HTML/CSS/JS" />
+    <meta name="description" content="Pawsitive Pet - Virtual pet with mini games (HTML/CSS/JS)" />
   </head>
   <body>
     <header class="app-header">
       <h1>🐾 Pawsitive Pet</h1>
-      <div class="theme-indicator" id="themeIndicator" aria-live="polite">Día</div>
+      <div class="theme-indicator" id="themeIndicator" aria-live="polite">Day</div>
     </header>
 
     <main class="layout" id="app">
-      <!-- Panel: Mascota + Controles + Estadísticas -->
+      <!-- Panel: Pet + Controls + Stats -->
       <section class="panel-left">
         <div class="pet-area">
-          <!-- Mascota: simple emoji con animación -->
+          <!-- Pet: simple emoji with animation -->
           <div class="pet" id="pet" aria-label="Pawsitive Pet" role="img">🐶</div>
 
-          <!-- Controles de interacción rápida -->
+          <!-- Quick interaction controls -->
           <div class="controls">
-            <button id="feedBtn" class="btn">🍖 Alimentar</button>
-            <button id="playBtn" class="btn">🎮 Jugar</button>
-            <button id="sleepBtn" class="btn">😴 Dormir</button>
+            <button id="feedBtn" class="btn">🍖 Feed</button>
+            <button id="playBtn" class="btn">🎮 Play</button>
+            <button id="sleepBtn" class="btn">😴 Sleep</button>
           </div>
         </div>
 
-        <!-- Mensajes breves de la mascota -->
-        <div class="pet-status" id="petStatus" aria-live="polite">Listo</div>
+        <!-- Short pet messages -->
+        <div class="pet-status" id="petStatus" aria-live="polite">Ready</div>
 
-        <!-- Estadísticas de la mascota -->
+        <!-- Pet stats -->
         <div class="stats" aria-live="polite">
           <div class="stat">
-            <label for="hungerBar">Hambre</label>
+            <label for="hungerBar">Hunger</label>
             <div class="bar"><div id="hungerBar" class="fill"></div></div>
           </div>
           <div class="stat">
-            <label for="happinessBar">Felicidad</label>
+            <label for="happinessBar">Happiness</label>
             <div class="bar"><div id="happinessBar" class="fill"></div></div>
           </div>
           <div class="stat">
-            <label for="energyBar">Energía</label>
+            <label for="energyBar">Energy</label>
             <div class="bar"><div id="energyBar" class="fill"></div></div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Sección de Mini-juegos -->
+    <!-- Mini games -->
     <section class="games">
-      <h2>Mini‑juegos</h2>
+      <h2>Mini games</h2>
 
-      <!-- Atrapar la pelota -->
+      <!-- Catch the ball -->
       <article class="game" id="ballGame">
         <div class="game-header">
-          <h3>🏀 Atrapa la pelota</h3>
+          <h3>🏀 Catch the ball</h3>
           <div class="game-controls">
-            <button id="ballGameStart" class="btn">Iniciar</button>
-            <button id="ballGameStop" class="btn btn-secondary">Detener</button>
+            <button id="ballGameStart" class="btn">Start</button>
+            <button id="ballGameStop" class="btn btn-secondary">Stop</button>
           </div>
         </div>
-        <p class="game-info">Haz clic en la pelota tantas veces como puedas antes de que termine el tiempo.</p>
-        <div class="score">Puntos: <span id="ballScore">0</span></div>
-        <div class="ball-area" id="ballGameArea" aria-label="Área de juego">
-          <div class="ball" id="ball" title="¡Haz clic!" tabindex="0"></div>
+        <p class="game-info">Click the ball as many times as you can before time runs out.</p>
+        <div class="score">Score: <span id="ballScore">0</span></div>
+        <div class="ball-area" id="ballGameArea" aria-label="Game area">
+          <div class="ball" id="ball" title="Click me!" tabindex="0"></div>
         </div>
       </article>
 
-      <!-- Memoria -->
+      <!-- Memory -->
       <article class="game" id="memoryGame">
         <div class="game-header">
-          <h3>🧠 Juego de memoria</h3>
+          <h3>🧠 Memory</h3>
           <div class="game-controls">
-            <button id="memoryStart" class="btn">Nuevo juego</button>
+            <button id="memoryStart" class="btn">New game</button>
           </div>
         </div>
-        <p class="game-info">Empareja todas las cartas. ¡Gana felicidad al completar!</p>
-        <div class="memory-status" id="memoryStatus">Listo</div>
-        <div class="memory-grid" id="memoryGrid" aria-label="Tablero de memoria"></div>
+        <p class="game-info">Match all the cards. Earn happiness when completed!</p>
+        <div class="memory-status" id="memoryStatus">Ready</div>
+        <div class="memory-grid" id="memoryGrid" aria-label="Memory board"></div>
       </article>
 
-      <!-- Reflejos -->
+      <!-- Reaction -->
       <article class="game" id="reactionGame">
         <div class="game-header">
-          <h3>⏱ Reflejos</h3>
+          <h3>⏱ Reaction</h3>
           <div class="game-controls">
-            <button id="reactionStart" class="btn">Iniciar</button>
+            <button id="reactionStart" class="btn">Start</button>
           </div>
         </div>
-        <p class="game-info">Haz clic cuando el panel se ponga verde lo más rápido posible.</p>
-        <div class="reaction-status" id="reactionStatus">Listo</div>
-        <div class="reaction-area" id="reactionArea" aria-label="Área de reflejos" tabindex="0">Espera…</div>
+        <p class="game-info">Click when the panel turns green as fast as possible.</p>
+        <div class="reaction-status" id="reactionStatus">Ready</div>
+        <div class="reaction-area" id="reactionArea" aria-label="Reaction area" tabindex="0">Wait…</div>
+      </article>
+
+      <!-- Chess vs your pet -->
+      <article class="game" id="chessGame">
+        <div class="game-header">
+          <h3>♟️ Chess vs your pet</h3>
+          <div class="game-controls">
+            <button id="chessNewGame" class="btn">New game</button>
+          </div>
+        </div>
+        <p class="game-info">You are White. Your pet plays Black. No castling or en passant. Promotion to Queen.</p>
+        <div class="chess-status" id="chessStatus">Ready</div>
+        <div class="chess-board" id="chessBoard" aria-label="Chess board"></div>
       </article>
     </section>
 
     <footer class="app-footer">
-      Hecho con ❤️ para el hackathon (HTML + CSS + JS puros)
+      Made with ❤️ (HTML + CSS + JS only)
     </footer>
+
+    <!-- Onboarding: set pet name and type -->
+    <section class="modal-overlay" id="onboardingModal" aria-hidden="true">
+      <div class="modal">
+        <h3>Name your pet</h3>
+        <label class="field">
+          <span>Pet name</span>
+          <input id="petNameInput" type="text" placeholder="e.g., Buddy" maxlength="20" />
+        </label>
+        <label class="field">
+          <span>Pet type</span>
+          <select id="petTypeSelect">
+            <option value="dog">Dog 🐶</option>
+            <option value="cat">Cat 🐱</option>
+            <option value="rabbit">Rabbit 🐰</option>
+            <option value="fox">Fox 🦊</option>
+            <option value="panda">Panda 🐼</option>
+            <option value="tiger">Tiger 🐯</option>
+            <option value="monkey">Monkey 🐵</option>
+            <option value="unicorn">Unicorn 🦄</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button id="saveOnboarding" class="btn">Save</button>
+        </div>
+      </div>
+    </section>
 
     <script src="script.js" defer></script>
   </body>

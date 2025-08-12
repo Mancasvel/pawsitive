@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pawsitive Pet</title>
+    <link rel="stylesheet" href="style.css" />
+    <meta name="description" content="Pawsitive Pet - Mascota virtual 100% HTML/CSS/JS" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>🐾 Pawsitive Pet</h1>
+      <div class="theme-indicator" id="themeIndicator" aria-live="polite">Día</div>
+    </header>
+
+    <main class="layout" id="app">
+      <!-- Panel izquierdo: Mascota + Controles + Estadísticas -->
+      <section class="panel-left">
+        <div class="pet-area">
+          <!-- Mascota: simple emoji con animación -->
+          <div class="pet" id="pet" aria-label="Pawsitive Pet" role="img">🐶</div>
+
+          <!-- Controles de interacción rápida -->
+          <div class="controls">
+            <button id="feedBtn" class="btn">🍖 Alimentar</button>
+            <button id="playBtn" class="btn">🎮 Jugar</button>
+            <button id="sleepBtn" class="btn">😴 Dormir</button>
+          </div>
+        </div>
+
+        <!-- Estadísticas de la mascota -->
+        <div class="stats" aria-live="polite">
+          <div class="stat">
+            <label for="hungerBar">Hambre</label>
+            <div class="bar"><div id="hungerBar" class="fill"></div></div>
+          </div>
+          <div class="stat">
+            <label for="happinessBar">Felicidad</label>
+            <div class="bar"><div id="happinessBar" class="fill"></div></div>
+          </div>
+          <div class="stat">
+            <label for="energyBar">Energía</label>
+            <div class="bar"><div id="energyBar" class="fill"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel derecho: Chat -->
+      <section class="panel-right">
+        <div class="chat" aria-live="polite">
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input">
+            <input id="chatInput" type="text" placeholder="Escribe para hablar con tu mascota..." aria-label="Mensaje para la mascota" />
+            <button id="chatSend" class="btn">Enviar</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Sección de Mini-juegos -->
+    <section class="games">
+      <h2>Mini‑juegos</h2>
+
+      <!-- Atrapar la pelota -->
+      <article class="game" id="ballGame">
+        <div class="game-header">
+          <h3>🏀 Atrapa la pelota</h3>
+          <div class="game-controls">
+            <button id="ballGameStart" class="btn">Iniciar</button>
+            <button id="ballGameStop" class="btn btn-secondary">Detener</button>
+          </div>
+        </div>
+        <p class="game-info">Haz clic en la pelota tantas veces como puedas antes de que termine el tiempo.</p>
+        <div class="score">Puntos: <span id="ballScore">0</span></div>
+        <div class="ball-area" id="ballGameArea" aria-label="Área de juego">
+          <div class="ball" id="ball" title="¡Haz clic!" tabindex="0"></div>
+        </div>
+      </article>
+
+      <!-- Memoria -->
+      <article class="game" id="memoryGame">
+        <div class="game-header">
+          <h3>🧠 Juego de memoria</h3>
+          <div class="game-controls">
+            <button id="memoryStart" class="btn">Nuevo juego</button>
+          </div>
+        </div>
+        <p class="game-info">Empareja todas las cartas. ¡Gana felicidad al completar!</p>
+        <div class="memory-status" id="memoryStatus">Listo</div>
+        <div class="memory-grid" id="memoryGrid" aria-label="Tablero de memoria"></div>
+      </article>
+    </section>
+
+    <footer class="app-footer">
+      Hecho con ❤️ para el hackathon (HTML + CSS + JS puros)
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
+  </html>
+

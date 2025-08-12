@@ -495,7 +495,7 @@
       sq.textContent = piece ? PIECES[piece] : "";
     }
     if (chessSelected >= 0) {
-      const moves = generateMovesForIndex(chessSelected, "w");
+      const moves = generateLegalMovesForIndex(chessSelected, "w");
       moves.forEach((m) => { squares[m].classList.add("highlight"); });
     }
   }
@@ -516,7 +516,7 @@
       renderChessBoard();
       return;
     }
-    const legal = generateMovesForIndex(chessSelected, "w");
+    const legal = generateLegalMovesForIndex(chessSelected, "w");
     if (legal.includes(idx)) {
       const result = makeChessMove(chessSelected, idx, "w");
       chessSelected = -1;
@@ -525,6 +525,7 @@
         // waiting for promotion choice
         return;
       }
+      evaluateGameState();
       if (chessTurn === "b") {
         setChessStatus("Pet is thinking…");
         setTimeout(petChessMove, 400);
@@ -630,14 +631,19 @@
     for (let i = 0; i < 64; i += 1) {
       const piece = chessBoard[i];
       if (!piece || !isBlack(piece)) continue;
-      const moves = generateMovesForIndex(i, "b");
+      const moves = generateLegalMovesForIndex(i, "b");
       moves.forEach((to) => {
         const captures = chessBoard[to] && isWhite(chessBoard[to]);
         allMoves.push({ from: i, to, captures });
       });
     }
     if (allMoves.length === 0) {
-      setChessStatus(`${state.petName || "Your pet"} has no moves. You win!`);
+      // no legal moves: checkmate or stalemate
+      if (inCheck("b", chessBoard)) {
+        setChessStatus(`${state.petName || "Your pet"} is checkmated. You win!`);
+      } else {
+        setChessStatus(`Stalemate. It's a draw.`);
+      }
       chessTurn = "-";
       return;
     }
@@ -646,7 +652,10 @@
     const choicePool = captureMoves.length ? captureMoves : allMoves;
     const choice = choicePool[Math.floor(Math.random() * choicePool.length)];
     makeChessMove(choice.from, choice.to, "b", "q");
-    if (chessTurn !== "-") setChessStatus("Your turn (White)");
+    if (chessTurn !== "-") {
+      evaluateGameState();
+      if (chessTurn !== "-") setChessStatus("Your turn (White)");
+    }
     renderChessBoard();
   }
 
@@ -752,27 +761,27 @@
     return moves.filter((m) => !isSide(chessBoard[m]));
   }
 
-  function isSquareAttackedBy(idx, attackerSide) {
+  function isSquareAttackedOnBoard(board, idx, attackerSide) {
     const isAttacker = attackerSide === "w" ? isWhite : isBlack;
     const { x, y } = chessIndexToCoord(idx);
     // Pawns
     if (attackerSide === "w") {
       const s1 = chessCoordToIndex(x - 1, y + 1);
       const s2 = chessCoordToIndex(x + 1, y + 1);
-      if (isInside(x - 1, y + 1) && chessBoard[s1] === "P") return true;
-      if (isInside(x + 1, y + 1) && chessBoard[s2] === "P") return true;
+      if (isInside(x - 1, y + 1) && board[s1] === "P") return true;
+      if (isInside(x + 1, y + 1) && board[s2] === "P") return true;
     } else {
       const s1 = chessCoordToIndex(x - 1, y - 1);
       const s2 = chessCoordToIndex(x + 1, y - 1);
-      if (isInside(x - 1, y - 1) && chessBoard[s1] === "p") return true;
-      if (isInside(x + 1, y - 1) && chessBoard[s2] === "p") return true;
+      if (isInside(x - 1, y - 1) && board[s1] === "p") return true;
+      if (isInside(x + 1, y - 1) && board[s2] === "p") return true;
     }
     // Knights
     const knightD = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
     for (const [dx, dy] of knightD) {
       const tx = x + dx, ty = y + dy;
       if (!isInside(tx, ty)) continue;
-      const p = chessBoard[chessCoordToIndex(tx, ty)];
+      const p = board[chessCoordToIndex(tx, ty)];
       if (attackerSide === "w" && p === "N") return true;
       if (attackerSide === "b" && p === "n") return true;
     }
@@ -785,7 +794,7 @@
       for (const [dx, dy] of group.d) {
         let tx = x + dx, ty = y + dy;
         while (isInside(tx, ty)) {
-          const p = chessBoard[chessCoordToIndex(tx, ty)];
+          const p = board[chessCoordToIndex(tx, ty)];
           if (p) {
             if (attackerSide === "w") {
               if (group.rooks && (p === "R" || p === "Q")) return true;
@@ -804,11 +813,85 @@
     for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
       const tx = x + dx, ty = y + dy;
       if (!isInside(tx, ty)) continue;
-      const p = chessBoard[chessCoordToIndex(tx, ty)];
+      const p = board[chessCoordToIndex(tx, ty)];
       if (attackerSide === "w" && p === "K") return true;
       if (attackerSide === "b" && p === "k") return true;
     }
     return false;
+  }
+
+  function isSquareAttackedBy(idx, attackerSide) {
+    return isSquareAttackedOnBoard(chessBoard, idx, attackerSide);
+  }
+
+  function findKingIndex(side, board) {
+    const target = side === "w" ? "K" : "k";
+    for (let i = 0; i < 64; i += 1) if (board[i] === target) return i;
+    return -1;
+  }
+
+  function inCheck(side, board) {
+    const kingIdx = findKingIndex(side, board);
+    if (kingIdx < 0) return false;
+    const attacker = side === "w" ? "b" : "w";
+    return isSquareAttackedOnBoard(board, kingIdx, attacker);
+  }
+
+  function applyMoveOnBoard(board, from, to, side) {
+    const mover = board[from];
+    let captured = board[to];
+    // en passant capture
+    if ((mover === "P" || mover === "p") && to === chessEnPassant && !captured) {
+      const capIdx = mover === "P" ? to + 8 : to - 8;
+      board[capIdx] = "";
+    }
+    board[to] = mover;
+    board[from] = "";
+  }
+
+  function generateLegalMovesForIndex(idx, side) {
+    const pseudo = generateMovesForIndex(idx, side);
+    const legal = [];
+    for (const to of pseudo) {
+      const copy = chessBoard.slice();
+      applyMoveOnBoard(copy, idx, to, side);
+      if (!inCheck(side, copy)) legal.push(to);
+    }
+    return legal;
+  }
+
+  function generateAllLegalMoves(side) {
+    const moves = [];
+    for (let i = 0; i < 64; i += 1) {
+      const p = chessBoard[i];
+      if (!p) continue;
+      if (side === "w" && !isWhite(p)) continue;
+      if (side === "b" && !isBlack(p)) continue;
+      const ls = generateLegalMovesForIndex(i, side);
+      for (const to of ls) moves.push({ from: i, to });
+    }
+    return moves;
+  }
+
+  function evaluateGameState() {
+    if (chessTurn === "-") return;
+    const side = chessTurn;
+    const legal = generateAllLegalMoves(side);
+    if (legal.length === 0) {
+      if (inCheck(side, chessBoard)) {
+        // checkmate
+        if (side === "w") setChessStatus(`Checkmate! ${state.petName || "Your pet"} wins!`);
+        else setChessStatus(`${state.petName || "Your pet"} is checkmated. You win!`);
+      } else {
+        setChessStatus(`Stalemate. It's a draw.`);
+      }
+      chessTurn = "-";
+      return;
+    }
+    if (inCheck(side, chessBoard)) {
+      if (side === "w") setChessStatus("You are in check!");
+      else setChessStatus(`${state.petName || "Your pet"} is in check!`);
+    }
   }
 
   if (chessNewGameBtn) chessNewGameBtn.addEventListener("click", newChessGame);
@@ -828,6 +911,7 @@
           Storage.save("pawsitive_state", state);
           renderAll();
           renderChessBoard();
+          evaluateGameState();
           if (chessTurn !== "-") {
             setChessStatus("Pet is thinking…");
             setTimeout(petChessMove, 400);
